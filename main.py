@@ -31,7 +31,7 @@ roll_pid_op = (False,2500)
 # 3350-3650 : Yaw
 '''
 
-def pid_function(cam):  
+def pid_function(cam):  #This is the PID function which takes care of all the pid controllers and runs continuously, checking if the input values are updated.
     global coords
     while True:
         if(cam.coords_available):   #check if the coordinates values are updated by the camera
@@ -71,6 +71,7 @@ def assign(p_d, p_coords):
     coords = p_coords
 
 #-------------- MATPLOTLIB --------------
+#Here instead of standard plotting, we use blitting to increase the speed of the program.
 x_len = 200         # Number of points to display
 y_range = [0, 184]  # Range of possible Y values to display
 
@@ -85,18 +86,18 @@ plt.title('PID ;)')
 plt.xlabel('Time')
 plt.ylabel('Height(cm)')
 
-# Create a blank line. We will update the line in animate
+# Create a blank line. We will update the line later with the data
 line, = ax.plot(xs, ys)
 
 def animate(i, ys):
     global d
 
-    temp_c = d[0]
+    temp_c = d[0]   #We are inputting the height of the drone here.
 
     ys.append(temp_c) # Add y to list
     ys = ys[-x_len:] # Limit y list to set number of items
 
-    line.set_ydata(ys) # Update line with new Y values
+    line.set_ydata(ys) # Update line with new distance values
 
     return line,
 
@@ -193,7 +194,7 @@ def a_py():
 #-------------- Main --------------
 def print_data():
     while True:
-        print(d[0],pitch_pid_op[1]-1000,roll_pid_op[1]-2000)
+        print(d[0],pitch_pid_op[1]-1000,roll_pid_op[1]-2000)    #To print the data of decoded pitch and roll values.
 
 if __name__ == '__main__':
     print(1)
