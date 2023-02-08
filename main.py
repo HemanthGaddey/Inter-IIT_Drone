@@ -12,16 +12,16 @@ import socket
 #  myDrone = pyMultiWii.pyMultiWii("192.168.4.1", 23)
 
 #-------------- PID --------------
-Kp = 0.5
-Ki = 0
+Kp = 0.5    #These are the P,I,D parameters which have to be tuned for stabilizing the drone,
+Ki = 0      #The PID parameters, are same for controlling the Roll and Pitch.
 Kd = 0
 set_point = 0
-pid_Roll = PID(Kp,Ki,Kd,set_point)
+pid_Roll = PID(Kp,Ki,Kd,set_point)  #initializing a pid control system for controll of both roll and pitch.
 pid_Pitch = PID(Kp,Ki,Kd,set_point)
-x_error = 0     #pixels
+x_error = 0     #pixels #The error variables to be fed to the pid controllers
 y_error = 0     #pixels
 z_error = 0     #cm
-pitch_pid_op = (False,1500)
+pitch_pid_op = (False,1500) #This is the output of the pid which will be read afterwards and depending on the first member of the tuple(True/False) it will be decided if the output was newly updated or not.
 roll_pid_op = (False,2500)
 '''
 # NOTE!!
@@ -31,15 +31,15 @@ roll_pid_op = (False,2500)
 # 3350-3650 : Yaw
 '''
 
-def pid_function(cam):
+def pid_function(cam):  
     global coords
     while True:
-        if(cam.coords_available):
+        if(cam.coords_available):   #check if the coordinates values are updated by the camera
             print("Coords received from camera")
-            x_error = coords[0]/20.48 #system Res   #[-100,+100]
+            x_error = coords[0]/20.48 #we divide the value by 20.48 since the frame width is 2048, [-100,+100]
             y_error = coords[1]/15.36
             print(coords)
-            if(x_error>=0):
+            if(x_error>=0): #Here since due to some problem in latency in the communication part, we resorted to bang-bang control
                 roll_pid_op = (True, 2600)
                 print(f"Roll 1100")
             else:
@@ -52,8 +52,9 @@ def pid_function(cam):
             else:
                 pitch_pid_op = (True, 3400)
                 print(f"Pitch 900")
-
-            #pitch_pid_op[1] = pid(y_error)*15 + 1500 + 1000
+            
+            #The actual values being sent are added 2500 for pitch and additional 3500 for roll, which are later subtracted to get a value between 1000-2000 and then transmitted to drone.
+            #pitch_pid_op[1] = pid(y_error)*15 + 1500 + 1000    
             #roll_pid_op[1] = pid(x_error)*15 + 1500 + 2000
 
             cam.coords_available = False
@@ -61,8 +62,8 @@ def pid_function(cam):
 
 #-------------- Aruco OpenCV Object --------------
 cam = ArUco.Camera()
-d = [0]
-coords = [0,0]
+d = [0] #The distance variable stores the distance of the drone from the ground, and is updated by the get_marker_data function
+coords = [0,0] #The coords variable stores thex and y coordinates of the drone with respect to a predefined origin in the camera frame. This is also updated by the get_marker_data function.
 def assign(p_d, p_coords):
     global d
     global coords
@@ -196,7 +197,7 @@ def print_data():
 
 if __name__ == '__main__':
     print(1)
-    cam_thread = threading.Thread(target=cam.get_marker_data, args=(d, coords, assign))
+    cam_thread = threading.Thread(target=cam.get_marker_data, args=(d, coords, assign)) #The parameters d(distance of drone from ground), coords(x,y coordinates of the drone) are passed to the function as lists by reference so their elements are changed by value(not by reference). 
     #  data_print_thread = threading.Thread(target=print_data, args=())
     #  a_py_thread = threading.Thread(target=a_py, args=())
     pid_thread = threading.Thread(target=pid_function, args=(cam, ))
